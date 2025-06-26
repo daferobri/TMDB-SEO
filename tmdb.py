@@ -1,4 +1,6 @@
 import os
+import pandas as pd
+import sqlalchemy as db
 from tmdbv3api import Account, TMDb, Movie
 
 tmdb = TMDb()
@@ -13,6 +15,12 @@ movie = Movie()
 
 query = input('Movie to add to watchlist: ')
 s = movie.search(query)
-first_result = s[0]
-print(f'Adding {first_result.title} to watchlist')
-account.add_to_watchlist(first_result.id, "movie")
+s_df = pd.DataFrame.from_dict(s)
+
+engine = db.create_engine('sqlite:///tmdb.db')
+
+s_df.to_sql('movies', con=engine, if_exists='replace', index=False)
+
+with engine.connect() as connection:
+   query_result = connection.execute(db.text("SELECT * FROM movies;")).fetchall()
+   print(pd.DataFrame(query_result))
